@@ -2,7 +2,7 @@
   "name": "easy-copy",
   "displayName": "Easy Copy",
   "description": "Easy Copy is a Visual Studio Code extension that lets you quickly copy the content of selected files and folders directly from the Explorer context menu. It recursively reads file contents, formats them with filenames, and places them on your clipboard — ideal for documentation, reviews, or sharing code snippets.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "icon": "icon.png",
   "publisher": "Gnel",
   "engines": {
@@ -22,6 +22,10 @@
       {
         "command": "easy-copy.copyPathsTree",
         "title": "Easy Copy: Paths Tree"
+      },
+      {
+        "command": "easy-copy.copyFiltered",
+        "title": "Easy Copy: Filtered"
       }
     ],
     "menus": {
@@ -32,6 +36,10 @@
         },
         {
           "command": "easy-copy.copyPathsTree",
+          "group": "navigation"
+        },
+        {
+          "command": "easy-copy.copyFiltered",
           "group": "navigation"
         }
       ]

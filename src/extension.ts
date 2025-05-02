@@ -30,7 +30,47 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.window.showInformationMessage(`Copied file structure with ${relativePaths.length} files.`);
     });
 
-    context.subscriptions.push(copyContentCommand, copyPathsTreeCommand);
+    const copyFilteredCommand = vscode.commands.registerCommand('easy-copy.copyFiltered', async (contextFile: vscode.Uri, selectedUris: vscode.Uri[] = []) => {
+        const selections = selectedUris.length ? selectedUris : [contextFile];
+        const allFiles = expandFilesAndFolders(selections);
+
+        const rawInput = await vscode.window.showInputBox({
+            prompt: 'Enter filters (e.g. intext:user inname:model -inname:.g.dart name:main.ts)',
+            placeHolder: 'intext:... inname:... -inname:... name:...',
+        });
+
+        if (!rawInput) return;
+
+        const filters = parseFilters(rawInput);
+
+        const filtered = allFiles.filter(filePath => {
+            const fileName = path.basename(filePath).toLowerCase();
+
+            if (filters.name.length && !filters.name.includes(fileName)) return false;
+            if (filters.inname.length && !filters.inname.some(sub => fileName.includes(sub))) return false;
+            if (filters.excludedInname.length && filters.excludedInname.some(sub => fileName.includes(sub))) return false;
+
+            if (!filters.intext.length) return true;
+
+            try {
+                const content = fs.readFileSync(filePath, 'utf-8').toLowerCase();
+                return filters.intext.every(keyword => content.includes(keyword));
+            } catch {
+                return false;
+            }
+        });
+
+        if (!filtered.length) {
+            vscode.window.showWarningMessage('No matching files found.');
+            return;
+        }
+
+        const output = buildClipboardContent(filtered);
+        await vscode.env.clipboard.writeText(output);
+        vscode.window.showInformationMessage(`Copied ${filtered.length} filtered file(s) to clipboard.`);
+    });
+
+    context.subscriptions.push(copyContentCommand, copyPathsTreeCommand, copyFilteredCommand);
 }
 
 function expandFilesAndFolders(uris: vscode.Uri[]): string[] {
@@ -66,9 +106,7 @@ function buildClipboardContent(filePaths: string[]): string {
             const content = fs.readFileSync(filePath, 'utf-8');
             const relativePath = vscode.workspace.asRelativePath(filePath);
             combined += `File: ${relativePath}\n\`\`\`\n${content}\n\`\`\`\n\n`;
-        } catch {
-            // Ignore unreadable files
-        }
+        } catch { }
     }
 
     return combined.trim();
@@ -79,7 +117,7 @@ function buildTree(paths: string[]): string {
     const seen = new Set<string>();
 
     paths.forEach(filePath => {
-        const parts = filePath.split(/[\\/]/); // handle both mac/win
+        const parts = filePath.split(/[\\/]/);
         let currentPath = '';
         parts.forEach((part, idx) => {
             const isLast = idx === parts.length - 1;
@@ -97,6 +135,38 @@ function buildTree(paths: string[]): string {
     });
 
     return treeLines.join('\n');
+}
+
+function parseFilters(input: string) {
+    const name: string[] = [];
+    const inname: string[] = [];
+    const excludedInname: string[] = [];
+    const intext: string[] = [];
+
+    const regex = /(-?inname|intext|name):("[^"]+"|\S+)/gi;
+    const matches = input.matchAll(regex);
+
+    for (const match of matches) {
+        const [, key, valueRaw] = match;
+        const value = valueRaw.replace(/^"|"$/g, '').toLowerCase();
+
+        switch (key) {
+            case 'name':
+                name.push(value);
+                break;
+            case 'inname':
+                inname.push(value);
+                break;
+            case '-inname':
+                excludedInname.push(value);
+                break;
+            case 'intext':
+                intext.push(value);
+                break;
+        }
+    }
+
+    return { name, inname, excludedInname, intext };
 }
 
 export function deactivate() { }
