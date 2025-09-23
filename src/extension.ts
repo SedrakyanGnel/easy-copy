@@ -98,6 +98,17 @@ function getAllFilesInDirectory(dir: string): string[] {
     });
 }
 
+function makeFileHeader(filePath: string): string {
+    const cfg = vscode.workspace.getConfiguration('easyCopy');
+    const include = cfg.get<boolean>('includeFileLabel', true);
+    if (!include) {
+        // No label at all; just the filename (or relative path, depending on existing logic)
+        return filePath;
+    }
+    const label = cfg.get<string>('fileLabelText', 'File: ');
+    return `${label}${filePath}`;
+}
+
 function buildClipboardContent(filePaths: string[]): string {
     let combined = '';
 
@@ -105,7 +116,7 @@ function buildClipboardContent(filePaths: string[]): string {
         try {
             const content = fs.readFileSync(filePath, 'utf-8');
             const relativePath = vscode.workspace.asRelativePath(filePath);
-            combined += `File: ${relativePath}\n\`\`\`\n${content}\n\`\`\`\n\n`;
+            combined += `${makeFileHeader(relativePath)}\n\`\`\`\n${content}\n\`\`\`\n\n`;
         } catch { }
     }
 

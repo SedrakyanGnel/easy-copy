@@ -18,6 +18,21 @@
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
+    "configuration": {
+      "title": "Easy Copy",
+      "properties": {
+        "easyCopy.includeFileLabel": {
+          "type": "boolean",
+          "default": true,
+          "description": "If true, prepend a label to filenames when copying (default matches current behavior). Set to false to paste raw filenames without any prefix."
+        },
+        "easyCopy.fileLabelText": {
+          "type": "string",
+          "default": "File: ",
+          "markdownDescription": "The label text to prepend before each filename when `easyCopy.includeFileLabel` is true. Example: `File: ` or `### `."
+        }
+      }
+    },
     "commands": [
       {
         "command": "easy-copy.copy",

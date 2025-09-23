@@ -21,6 +21,22 @@ Right-click on any file or folder in the Explorer sidebar and choose:
 
 You can also run these from the **Command Palette**.
 
+## ⚙️ Settings
+
+You can customize how filenames are labeled when copying:
+
+```jsonc
+// settings.json
+{
+  // Keep the label (default = true). Set false to paste raw filenames with no prefix.
+  "easyCopy.includeFileLabel": true,
+
+  // Customize the label text when includeFileLabel is true.
+  // Examples: "File: ", "### ", "" (empty still counts as "include" but adds no text)
+  "easyCopy.fileLabelText": "File: "
+}
+```
+
 ## 🔎 Filter Syntax (for "Easy Copy: Filtered")
 
 ```
